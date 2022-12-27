@@ -9,9 +9,6 @@
   //import event listeners
   import { swipe } from 'svelte-gestures';
 
-  //define game instance
-  let game = {};
-
   //define color amount
   let colors = 7;
 
@@ -31,8 +28,16 @@
   //generate a number between the max and min, inclusive
   const random = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 
-  //restart game 
-  const restart = () => game = {};
+  //start game 
+  const start = () => {
+
+    //empty blocks
+    blocks = {};
+
+    //create initial blocks
+    for(let i = 0; i < initial_blocks; i++) create([]);
+
+  }
 
   //define valid keys
   const KEYS = {
@@ -63,10 +68,7 @@
   }
 
   //create a new block
-  $: create = () => {
-
-    //convert blocks to an array format
-    let blocks_array = Object.values(blocks);
+  $: create = blocks_array => {
 
     //define the block id
     let id = 0;
@@ -78,9 +80,6 @@
     let x = 0;
     let y = 0;
 
-    //define duplicate position state
-    let duplicate = false;
-
     //generate a new x and y coordinate
     do {
 
@@ -90,34 +89,8 @@
       //set y to a random integer bwtween 0 and 1 less than the grid size 
       y = random(0, grid_size - 1);
 
-      //
-      duplicate = false;
-
-      //
-      let lost = blocks_array.length > 0;
-
-      //
-      blocks_array.forEach(block => {
-
-        //
-        let position_taken = block.x === x && block.y === y;
-
-        //
-        if(position_taken) duplicate = true;
-
-        //
-        if(!position_taken) lost = false;
-
-      });
-
-      //
-      if(lost) console.log(lost)
-
-      //
-      if(lost) return restart();
-
     //while there is a block at the x and y coordinate
-    } while(duplicate);
+    } while(blocks_array.some(block => block.x === x && block.y === y));
 
     //define the block value as 2 with a 1/10 chance of being 4
     let value = !random(0, 9) ? 4 : 2;
@@ -178,13 +151,11 @@
 
   });
 
-  //
-  onMount(() => { for(let i = 0; i < initial_blocks; i++) create() });
+  //start game on mount
+  onMount(start);
 
   //
   const handle = event => {
-
-    if(event.detail.direction) console.log(event.detail.direction);
 
     //
     const key = event.detail.direction ?? event.key;
@@ -198,8 +169,14 @@
     //
     blocks = { ...blocks, };
 
+    //convert blocks to an array format
+    const blocks_array = Object.values(blocks);
+
     //
-    create();
+    if(blocks_array.length === grid_size ** 2) return start();
+
+    //
+    create(blocks_array);
 
   }
 
@@ -209,61 +186,48 @@
 
 <main use:swipe={{ timeframe: 1000, minSwipeDistance: 10, touchAction: 'none', }} on:swipe={handle}>
 
-  {#key game}
-    <div class="game">
+  <div class="board" style={`
+    --block-size: ${block_size}em;
+    --gap: ${gap}em;
+  `}> 
 
-      <div class="board" style={`
-        --block-size: ${block_size}em;
-        --gap: ${gap}em;
-      `}> 
-
-        <div class="grid" style={`
-          grid-template-columns: repeat(${grid_size}, 1fr)
-        `}>
-          {#each { length: grid_size ** 2 } as _}
-            <div class="block space"> </div>
-          {/each}
-        </div>
-
-        {#each Object.values(blocks) as { value, x, y, id, } (id)}
-          <div class="block value" in:scale style={`
-            top: ${y * (block_size + gap)}em;
-            left: ${x * (block_size + gap)}em;
-            background-color: var(--color${Math.log2(value) % colors + 1}-07);
-            border: 0.2em solid var(--color${Math.log2(value) % colors + 1});
-          `}> 
-            <div class="label" style={`
-              font-size: ${1 / (1 + (Math.floor(value / 10) / 400))}em
-            `}> {value} </div>
-          </div>
-        {/each}
-
-      </div>
-
+    <div class="grid" style={`
+      grid-template-columns: repeat(${grid_size}, 1fr)
+    `}>
+      {#each { length: grid_size ** 2 } as _}
+        <div class="block space"> </div>
+      {/each}
     </div>
-  {/key}
+
+    {#each Object.values(blocks) as { value, x, y, id, } (id)}
+      <div class="block value" in:scale style={`
+        top: ${y * (block_size + gap)}em;
+        left: ${x * (block_size + gap)}em;
+        background-color: var(--color${Math.log2(value) % colors + 1}-07);
+        border: 0.2em solid var(--color${Math.log2(value) % colors + 1});
+      `}> 
+        <div class="label" style={`
+          font-size: ${1 / (1 + (Math.floor(value / 10) / 400))}em
+        `}> {value} </div>
+      </div>
+    {/each}
+
+  </div>
 
 </main>
 
 <style>
 
   main {
+    display: grid;
+    place-items: center;
+
     height: 100vh;
 
     background: var(--darkgrey);
 
     font-size: calc(0.5em + 2vw);
   }
-
-  .game {
-    display: grid;
-    place-items: center;
-
-    width: 100%;
-    height: 100%;
-  }
-
-
 
   .board {
     position: relative;
