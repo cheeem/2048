@@ -116,50 +116,63 @@
   }
 
   //determine if each block can move in the given direction 
-  $: move = direction => Object.values(blocks).sort(SORTS[direction]).forEach((block, i, sorted) => {
+  $: move = direction => {
 
-    //get the movement parameters
-    const { main_axis, cross_axis, increment, limit, } = PARAMS[direction];
+    //define moved state
+    let moved = false;
+    
+    //sort and attempt to move each block
+    Object.values(blocks).sort(SORTS[direction]).forEach((block, i, sorted) => {
 
-    //keep attempting to move the iterated block until returned
-    while(true) {
+      //get the movement parameters
+      const { main_axis, cross_axis, increment, limit, } = PARAMS[direction];
 
-      //get the main coordinate, cross coordinate, and value of the iterated block
-      let { [main_axis]: main_coordinate, [cross_axis]: cross_coordinate, value, } = block;
+      //keep attempting to move the iterated block until returned
+      while(true) {
 
-      //if the main coordinate meets the limit, return
-      if(main_coordinate === limit) return;
+        //get the main coordinate, cross coordinate, and value of the iterated block
+        let { [main_axis]: main_coordinate, [cross_axis]: cross_coordinate, value, } = block;
 
-      //increment the main coordinate
-      main_coordinate += increment;
+        //if the main coordinate meets the limit, return
+        if(main_coordinate === limit) return;
 
-      //get the next block
-      const next = sorted[i - 1];
+        //increment the main coordinate
+        main_coordinate += increment;
 
-      //determine if the block is adjacent to the next block
-      const has_next_block = main_coordinate === next?.[main_axis] && cross_coordinate === next?.[cross_axis];
+        //get the next block
+        const next = sorted[i - 1];
 
-      //if the block is adjacent to the next block and the values of each block are not the same, return
-      if(has_next_block && value !== next.value) return;
+        //determine if the block is adjacent to the next block
+        const has_next_block = main_coordinate === next?.[main_axis] && cross_coordinate === next?.[cross_axis];
 
-      //set the main coordinate of the block to the main coordinate
-      block[main_axis] = main_coordinate;
+        //if the block is adjacent to the next block and the values of each block are not the same, return
+        if(has_next_block && value !== next.value) return;
 
-      //if the block is not adjacent to the next block, continue
-      if(!has_next_block) continue;
+        //set the main coordinate of the block to the main coordinate
+        block[main_axis] = main_coordinate;
 
-      //delete the next block 
-      delete blocks[next.id];
+        //set moved state to true
+        moved = true;
 
-      //muliply the next block's value by 2
-      block.value *= 2;
-     
-      //return
-      return;
+        //if the block is not adjacent to the next block, continue
+        if(!has_next_block) continue;
 
-    }
+        //delete the next block 
+        delete blocks[next.id];
 
-  });
+        //muliply the next block's value by 2
+        block.value *= 2;
+      
+        //return
+        return;
+
+      }
+
+    });
+
+    return moved;
+
+  }
 
   //handle key/swipe events
   const handle = event => {
@@ -171,7 +184,7 @@
     if(!KEYS[key]) return;
 
     //move in the selected direction
-    move(KEYS[key]);
+    let moved = move(KEYS[key]);
 
     //update blocks
     blocks = { ...blocks, };
@@ -182,8 +195,8 @@
     //if the player cannot move, return and restart the game
     if(blocks_array.length === grid_size ** 2) return start();
 
-    //create a new block at a random position
-    create(blocks_array);
+    //if a block has moved, create a new block at a random position 
+    if(moved) create(blocks_array);
 
   }
 
