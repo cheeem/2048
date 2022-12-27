@@ -9,6 +9,9 @@
   //import event listeners
   import { swipe } from 'svelte-gestures';
 
+  //import nav
+  import Nav from './Nav.svelte';
+
   //define color amount
   let colors = 7;
 
@@ -34,17 +37,24 @@
     //empty blocks
     blocks = {};
 
-    //create initial blocks
-    for(let i = 0; i < initial_blocks; i++) create([]);
+    //create initial blocks at random positions
+    for(let i = 0; i < initial_blocks; i++) create(Object.values(blocks));
 
   }
 
   //define valid keys
   const KEYS = {
+    //arrow directions
     'ArrowUp': 'UP',
     'ArrowDown': 'DOWN',
     'ArrowLeft': 'LEFT',
     'ArrowRight': 'RIGHT',
+    //keyboard directions
+    'w': 'UP',
+    's': 'DOWN',
+    'a': 'LEFT',
+    'd': 'RIGHT',
+    //swipe directions
     'top': 'UP',
     'bottom': 'DOWN',
     'left': 'LEFT',
@@ -105,86 +115,88 @@
     
   }
 
-  //
-  $: move = KEY => Object.values(blocks).sort(SORTS[KEY]).forEach((block, i, sorted) => {
+  //determine if each block can move in the given direction 
+  $: move = direction => Object.values(blocks).sort(SORTS[direction]).forEach((block, i, sorted) => {
 
-    //
-    const { main_axis, cross_axis, increment, limit, } = PARAMS[KEY];
+    //get the movement parameters
+    const { main_axis, cross_axis, increment, limit, } = PARAMS[direction];
 
-    //
+    //keep attempting to move the iterated block until returned
     while(true) {
 
-      //
-      let { [main_axis]: main_coordinate, [cross_axis]: cross_coordinate, value } = block;
+      //get the main coordinate, cross coordinate, and value of the iterated block
+      let { [main_axis]: main_coordinate, [cross_axis]: cross_coordinate, value, } = block;
 
-      //
+      //if the main coordinate meets the limit, return
       if(main_coordinate === limit) return;
 
-      //
+      //increment the main coordinate
       main_coordinate += increment;
 
-      //
+      //get the next block
       const next = sorted[i - 1];
 
-      //
+      //determine if the block is adjacent to the next block
       const has_next_block = main_coordinate === next?.[main_axis] && cross_coordinate === next?.[cross_axis];
 
-      //
+      //if the block is adjacent to the next block and the values of each block are not the same, return
       if(has_next_block && value !== next.value) return;
 
-      //
+      //set the main coordinate of the block to the main coordinate
       block[main_axis] = main_coordinate;
 
-      //
+      //if the block is not adjacent to the next block, continue
       if(!has_next_block) continue;
 
-      //
+      //delete the next block 
       delete blocks[next.id];
 
-      //
+      //muliply the next block's value by 2
       block.value *= 2;
      
-      //
+      //return
       return;
 
     }
 
   });
 
-  //start game on mount
-  onMount(start);
-
-  //
+  //handle key/swipe events
   const handle = event => {
 
-    //
+    //get the event key
     const key = event.detail.direction ?? event.key;
 
-    //
+    //if the key is not valid, return
     if(!KEYS[key]) return;
 
-    //
+    //move in the selected direction
     move(KEYS[key]);
 
-    //
+    //update blocks
     blocks = { ...blocks, };
 
     //convert blocks to an array format
     const blocks_array = Object.values(blocks);
 
-    //
+    //if the player cannot move, return and restart the game
     if(blocks_array.length === grid_size ** 2) return start();
 
-    //
+    //create a new block at a random position
     create(blocks_array);
 
   }
+
+  //start game on mount
+  onMount(start);
 
 </script>
 
 <svelte:window on:keydown|preventDefault={handle} />
 
 <main use:swipe={{ timeframe: 1000, minSwipeDistance: 10, touchAction: 'none', }} on:swipe={handle}>
+
+  <Nav />
 
   <div class="board" style={`
     --block-size: ${block_size}em;
@@ -226,7 +238,7 @@
 
     background: var(--darkgrey);
 
-    font-size: calc(0.5em + 2vw);
+    font-size: calc(0.75em + 1.75vw);
   }
 
   .board {
