@@ -15,12 +15,18 @@
   //define color amount
   let colors = 7;
 
-  //define block/grid dimensions
-  let block_size = 2.5;
-  let gap = 0.5;
-
   //define grid size
-  let grid_size = 4;
+  let grid_size = 3;
+
+  //define the next exponent goal
+  let exponent_goal = 5;
+
+  //define difference between the current and next goal exponent
+  let exponent_difference = 3;
+
+  //define block/grid dimensions
+  $: block_size = 12 / grid_size;
+  $: gap = block_size / 5;
 
   //define amount of initial blocks
   let initial_blocks = 2;
@@ -35,10 +41,34 @@
   const start = () => {
 
     //empty blocks
-    blocks = {};
+    blocks = {
+      0: {
+        id: 0,
+        x: 0,
+        y: 0,
+        value: 2048,
+      },
+    };
 
     //create initial blocks at random positions
     for(let i = 0; i < initial_blocks; i++) create(Object.values(blocks));
+
+  }
+
+  //expand the grid to a larger size and set the next exponent goal
+  const upgrade_grid = () => {
+
+    //if the exponent differnece is 0, return
+    if(!exponent_difference) return;
+
+    //increase the exponent goal by the exponent difference
+    exponent_goal += exponent_difference;
+
+    //increment the grid size
+    grid_size++;
+
+    //decrement the exponent difference
+    exponent_difference--;
 
   }
 
@@ -170,6 +200,7 @@
 
     });
 
+    //return moved state
     return moved;
 
   }
@@ -194,6 +225,9 @@
 
     //if the player cannot move, return and restart the game
     if(blocks_array.length === grid_size ** 2) return start();
+
+    //if the exponent goal has been met, upgrade the grid
+    if(blocks_array.some(({value}) => Math.log2(value) === exponent_goal)) upgrade_grid();
 
     //if a block has moved, create a new block at a random position 
     if(moved) create(blocks_array);
@@ -220,7 +254,9 @@
       grid-template-columns: repeat(${grid_size}, 1fr)
     `}>
       {#each { length: grid_size ** 2 } as _}
-        <div class="block space"> </div>
+        <div class="block space" style={`
+          border-radius: ${gap / 1.5}em;
+        `}> </div>
       {/each}
     </div>
 
@@ -230,9 +266,10 @@
         left: ${x * (block_size + gap)}em;
         background-color: var(--color${Math.log2(value) % colors + 1}-07);
         border: 0.2em solid var(--color${Math.log2(value) % colors + 1});
+        border-radius: ${gap / 1.5}em;
       `}> 
         <div class="label" style={`
-          font-size: ${1 / (1 + (Math.floor(value / 10) / 400))}em
+          font-size: ${block_size / (2.5 + (Math.floor(value / 10) / 200))}em
         `}> {value} </div>
       </div>
     {/each}
@@ -269,7 +306,7 @@
 
     background-color: var(--white);
 
-    border-radius: 0.3em;
+    border: 0.2em solid var(--lightgrey);
   }
 
   .value {
