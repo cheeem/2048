@@ -1,5 +1,8 @@
 <script>
 
+  //import svgs
+  import svg_github from './svg/github.svg';
+
   //import lifecycle handlers
   import { onMount } from 'svelte';
 
@@ -9,17 +12,20 @@
   //import event listeners
   import { swipe } from 'svelte-gestures';
 
-  //import nav
-  import Nav from './Nav.svelte';
-
   //define color amount
   let colors = 7;
 
-  //define grid size
+  //define the initial grid size
   let grid_size = 3;
 
-  //define the next exponent goal
-  let exponent_goal = 5;
+  //define amount of initial blocks
+  let initial_blocks = 2;
+
+  //define the initial maximum block value
+  let max = 2;
+
+  //define the initial goal
+  let goal = 32;
 
   //define difference between the current and next goal exponent
   let exponent_difference = 3;
@@ -27,9 +33,6 @@
   //define block/grid dimensions
   $: block_size = 12 / grid_size;
   $: gap = block_size / 5;
-
-  //define amount of initial blocks
-  let initial_blocks = 2;
 
   //define blocks
   let blocks = {};
@@ -55,7 +58,7 @@
     if(!exponent_difference) return;
 
     //increase the exponent goal by the exponent difference
-    exponent_goal += exponent_difference;
+    goal *= 2 ** exponent_difference;
 
     //increment the grid size
     grid_size++;
@@ -126,7 +129,7 @@
     } while(blocks_array.some(block => block.x === x && block.y === y));
 
     //define the block value as 2 with a 1/10 chance of being 4
-    let value = !random(0, 9) ? 4 : 2;
+    let value = !random(0, 9) && blocks_array.length ? 4 : 2;
 
     //create a key-value pair in blocks between the id and the block data
     blocks[id] = {
@@ -219,8 +222,11 @@
     //if the player cannot move, return and restart the game
     if(blocks_array.length === grid_size ** 2) return start();
 
+    //get the maximum block value
+    max = blocks_array.reduce((max, {value}) => max < value ? value : max, 2);
+
     //if the exponent goal has been met, upgrade the grid
-    if(blocks_array.some(({value}) => Math.log2(value) === exponent_goal)) upgrade_grid();
+    if(max === goal) upgrade_grid();
 
     //if a block has moved, create a new block at a random position 
     if(moved) create(blocks_array);
@@ -230,13 +236,34 @@
   //start game on mount
   onMount(start);
 
+  //define socials
+  const socials = [
+    { href: 'https://github.com/cheeem/2048', svg: svg_github },
+  ];
+
 </script>
 
 <svelte:window on:keydown|preventDefault={handle} />
 
 <main use:swipe={{ timeframe: 1000, minSwipeDistance: 10, touchAction: 'none', }} on:swipe={handle}>
 
-  <Nav />
+  <nav>
+
+    <div class="exponent-goal"> 
+      {max} / {goal}
+    </div>
+
+    <ul class="socials">
+      {#each socials as { href, svg }}
+        <a {href} target="_blank" rel="noreferrer">
+          <li>
+            <img src={svg} alt="" />
+          </li>
+        </a>
+      {/each}
+    </ul>
+
+  </nav>
 
   <div class="board" style={`
     --block-size: ${block_size}em;
@@ -282,6 +309,56 @@
     background: var(--darkgrey);
 
     font-size: calc(0.75em + 1.75vw);
+  }
+
+  nav {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    padding: 1.25em 2em;
+
+    width: 100%;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1em;
+  }
+
+  .exponent-goal {
+    font-size: 1.5em;
+    font-weight: 600;
+  }
+
+  .socials {
+    display: flex;
+    
+    gap: 1em;
+  }
+
+  li:hover img {
+    scale: 1.2;
+  }
+
+  img {
+    width: calc(1.75rem + 1.75em);
+
+    filter: var(--filter-white);
+
+    transition: 0.3s;
+  }
+
+  @media screen and (min-width: 480px) {
+
+    nav {
+      flex-direction: column;
+    }
+
+    .socials {
+      flex-direction: column;
+    }
+
   }
 
   .board {
