@@ -41,14 +41,7 @@
   const start = () => {
 
     //empty blocks
-    blocks = {
-      0: {
-        id: 0,
-        x: 0,
-        y: 0,
-        value: 2048,
-      },
-    };
+    blocks = {};
 
     //create initial blocks at random positions
     for(let i = 0; i < initial_blocks; i++) create(Object.values(blocks));
