@@ -249,7 +249,7 @@
 
   <nav>
 
-    <div class="exponent-goal"> 
+    <div class="goal"> 
       {max} / {goal}
     </div>
 
@@ -326,7 +326,7 @@
     gap: 1em;
   }
 
-  .exponent-goal {
+  .goal {
     font-size: 1.5em;
     font-weight: 600;
   }
@@ -350,10 +350,6 @@
   }
 
   @media screen and (min-width: 480px) {
-
-    nav {
-      flex-direction: column;
-    }
 
     .socials {
       flex-direction: column;
