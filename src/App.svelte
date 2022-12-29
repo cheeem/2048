@@ -289,7 +289,7 @@
         border-radius: ${gap / 1.5}em;
       `}> 
         <div class="label" style={`
-          font-size: ${block_size / (2.5 + (Math.floor(value / 10) / 200))}em
+          font-size: ${block_size / (2.5 + (Math.floor(Math.log10(value)) / 3.5))}em
         `}> {value} </div>
       </div>
     {/each}
