@@ -46,6 +46,18 @@
     //empty blocks
     blocks = {};
 
+    //set the initital grid size
+    grid_size = 3;
+
+    //set the initial maximum block value
+    max = 2;
+
+    //set the initial goal
+    goal = 32;
+
+    //set the difference between the current and next goal exponent
+    exponent_difference = 3;
+
     //create initial blocks at random positions
     for(let i = 0; i < initial_blocks; i++) create(Object.values(blocks));
 
@@ -223,7 +235,7 @@
     if(blocks_array.length === grid_size ** 2) return start();
 
     //get the maximum block value
-    max = blocks_array.reduce((max, {value}) => max < value ? value : max, 2);
+    max = blocks_array.reduce((max, { value, }) => max < value ? value : max, 2);
 
     //if the exponent goal has been met, upgrade the grid
     if(max === goal) upgrade_grid();
@@ -349,14 +361,6 @@
     transition: 0.3s;
   }
 
-  @media screen and (min-width: 480px) {
-
-    .socials {
-      flex-direction: column;
-    }
-
-  }
-
   .board {
     position: relative;
   }
@@ -388,6 +392,14 @@
     font-weight: 600;
 
     color: var(--white);
+  }
+
+  @media screen and (min-width: 480px) {
+
+    .socials {
+      flex-direction: column;
+    }
+
   }
 
 </style>
